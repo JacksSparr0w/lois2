@@ -20,6 +20,27 @@
         <table id="table" class="table table-striped">
         </table>
     </form>
+    <div class="examples-container">
+        <label>Формулы быстрого ввода</label>
+        <input class="form-group btn btn-default btn-success" type="button" value="A"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="B"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="(!A)"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="(!B)"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="(A|B)"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="((!A)|B)"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="(A|(!B)"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="((!A)|(!B))"
+                   onclick="calcView.fill(this)"/>
+        <input class="form-group btn btn-default btn-success" type="button" value="Clear"
+                   onclick="calcView.fill(this)"/>
+    </div>
 </div>
 
 <script src="./assets/js/jquery-3.3.1.slim.min.js"></script>

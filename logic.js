@@ -5,10 +5,11 @@
  * Построить СДНФ для заданной формулы.
  */
 let controller;
+let calcView;
 
 function createController() {
     let holder = new ExpressionHolder();
-    let calcView = new CalculatorView();
+    calcView = new CalculatorView();
     controller = new Controller(holder, calcView);
 }
 
@@ -287,6 +288,24 @@ class CalculatorView {
         } 
         innerHTML += "</tbody>";
         this.table.innerHTML = innerHTML;
+    }
+
+    fill(element){
+    	let addValue = element.value;
+    	if (addValue.includes("Clear")){
+    		this.edit.value = "";
+    		return;
+    	}
+    	if (this.edit.value == addValue || 
+    		this.edit.value.includes("&" + addValue) ||
+    		this.edit.value.includes(addValue + "&") ||
+    		this.edit.value.includes("&" + addValue + "&")){
+    		return;
+    	}
+    	if (this.edit.value) {
+    		this.edit.value += "&";
+    	}
+    	this.edit.value += addValue;
     }
 
     clean() {
