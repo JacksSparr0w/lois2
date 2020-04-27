@@ -4,6 +4,12 @@
  * Лабораторная работа 2
  * Построить СДНФ для заданной формулы.
  */
+
+var unaryOrBinaryComplexFormula = new RegExp('([(][!]([A-Z]|[0-1])[)])|([(]([A-Z]|[0-1])((&)|(\\|)|(->)|(~))([A-Z]|[0-1])[)])','g');
+var unaryOrBinaryComplexFormula1 = new RegExp('([(][!]([A-Z]|[0-1])[)])|([(]([A-Z]|[0-1])((&)|(\\|)|(->)|(~))([A-Z]|[0-1])[)])');
+var atomOrConstant = new RegExp('([A-Z]|[0-1])', 'g');
+var replaceFormula = "R";
+var tempFormula;
 let controller;
 let calcView;
 
@@ -37,6 +43,11 @@ class Controller {
         let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
         
         let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
+        if (result.includes("()")){
+            this.calculatorView.clearTable();
+            this.calculatorView.renderTextResult("Невозможно построить СДНФ");
+            return;
+        }
 
         this.calculatorView.renderTable(table, arrayWithLiteral);
         this.calculatorView.renderTextResult(result);
@@ -84,37 +95,67 @@ class ExpressionHolder {
         } else return false;       
     }
 
-    isFormula() {
+    isFormula() { //проверка является ли строка формулой
         let formula = this.expression;
-        let testSymbol = 'A';
-        let negative = /\(![A-Z01]\)/g;
-         let disj = /\([A-Z01]\|[A-Z01]\)/g;
-        let konj = /\([A-Z01]\&[A-Z01]\)/g;
-       
-        let impl = /\([A-Z01]\->[A-Z01]\)/g;
-        let equiv = /\([A-Z01]\~[A-Z01]\)/g;
-        formula = formula.replace(negative, testSymbol);
+        if (formula.match('^[A-Z]$')){
+            return false;
+        }
+        while (formula != tempFormula) {
+            tempFormula = formula;
+            formula = formula.replace(unaryOrBinaryComplexFormula, replaceFormula);
+        }
+        tempFormula = 0;
+        if ((formula.length == 1)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-        while(formula.match(konj) !== null) {
-            formula = formula.replace(konj, testSymbol);
-        }
-        while(formula.match(disj) !== null) {
-            formula = formula.replace(disj, testSymbol);
-        }
-        while(formula.match(impl) !== null) {
-           formula = formula.replace(impl, testSymbol);
-        }
-        while(formula.match(equiv) !== null) {
-            formula = formula.replace(equiv, testSymbol);
-        } 
-       
-       while(formula.match(/([A-Z01]|\(A\))\|([A-Z01]|\(A\))/g) !== null 
-       || formula.match(/([A-Z01]|\(A\))\&([A-Z01]|\(A\))/g) !== null) {
-            formula = formula.replace(/([A-Z01]|\(A\))\|([A-Z01]|\(A\))/g, testSymbol);
-            formula = formula.replace(/([A-Z01]|\(A\))\&([A-Z01]|\(A\))/g, testSymbol);
-       }
+    getNumberOfSubformulas(formula) {
+        debugger;
+    result=null; // инициализация переменных
+    var oldFormule=""; //
+    var leftFormule=""; // 
+    result = formula.match(atomOrConstant, 'g'); // получение атомарных символов		
+        while (formula !=="R") { // основной цикл получение всех подформул
+            var medium=null;
+        tempFormula = formula;
+            
+        result.push(formula.match(unaryOrBinaryComplexFormula)); // поулчение первого совпадения
+            var length=result.length-1; // -
+            if(Array.isArray(result[length]))  // -
+                if(result[length].length>1) // -
+                    result[length].splice(1,result[length].length-1); // -
+            medium=result[length][0].match(new RegExp('([R])','g')) // кол-во символов R
         
-        return formula.match(/^\(?\!?[A01]\)?$/) !== null;
+            if(medium != null && medium.length == 1) // случай с одним R
+            {
+                result[length][0]=result[length][0].replace("R",oldFormule);
+                oldFormule=result[length][0];
+            }
+            else if (medium != null && medium.length == 2)  //случай с двумя R
+            {
+                result[length][0]=result[length][0].replace("R",leftFormule);
+        
+                result[length][0]=result[length][0].replace("R",oldFormule);
+                oldFormule=result[length][0]; 
+            }
+            else if (medium == null ) // случай с тремя R
+            {
+                leftFormule=oldFormule;
+                oldFormule=result[length][0];
+            }
+                    
+        formula = formula.replace(unaryOrBinaryComplexFormula1, replaceFormula);//замена формулы на R
+        }
+        result = result.join(','); //структуризация массива
+        result = result.split(',');
+        for (var i = 0; i < result.length; i++) //удаление одинаковых подформул
+            for (var j = i+1; j < result.length; j++)
+            if (result[i] == result[j]) {result.splice(j, 1);j--;}
+        
+        return result.length;
     }
 
     makePDNF(table, arrayWithLiteral, countRow) {
