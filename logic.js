@@ -43,7 +43,7 @@ class Controller {
         let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
         
         let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
-        if (result.includes("()")){
+        if (result.includes("()") || result == ""){
             this.calculatorView.clearTable();
             this.calculatorView.renderTextResult("Невозможно построить СДНФ");
             return;
@@ -97,9 +97,6 @@ class ExpressionHolder {
 
     isFormula() { //проверка является ли строка формулой
         let formula = this.expression;
-        if (formula.match('^[A-Z]$')){
-            return false;
-        }
         while (formula != tempFormula) {
             tempFormula = formula;
             formula = formula.replace(unaryOrBinaryComplexFormula, replaceFormula);
@@ -160,7 +157,7 @@ class ExpressionHolder {
 
     makePDNF(table, arrayWithLiteral, countRow) {
         let resultColumn = arrayWithLiteral.length;
-        let result = "(";
+        let result = "";
         let array = [];
         for(let index = 0; index < countRow; index++) {
             if(table[index][resultColumn] === "1") {
@@ -168,7 +165,11 @@ class ExpressionHolder {
                 array.push(formula);
             }
         }
-        result += array.join("|") + ")";
+        result += array.join("|") + "";
+        let size = result.split("|").length;
+        if (size > 1){
+            result = '(' + result + ')';
+        }
         return result;
     }
 
