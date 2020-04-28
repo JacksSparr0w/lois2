@@ -83,11 +83,11 @@ class Controller {
     checkAnswer(item){
         this.holder.addExpression(document.getElementById('panel').value);
             if(!this.holder.checkBracket()) {
-                this.calculatorView.renderRightAnswer(item.value, "");
+                this.calculatorView.renderRightAnswer(item.value, "Неправильно расставленны скобки");
                 return;
             }
             if(!this.holder.isFormula()) {
-                this.calculatorView.renderRightAnswer(item.value, "");
+                this.calculatorView.renderRightAnswer(item.value, "Неправильная формула");
                 return;
             }
 
@@ -97,7 +97,7 @@ class Controller {
             
             let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
             if (result.includes("()") || result == ""){
-                this.calculatorView.renderRightAnswer(item.value, "");
+                this.calculatorView.renderRightAnswer(item.value, "Невозможно построить СДНФ");
                 return;
             }
             this.calculatorView.renderRightAnswer(item.value, result);
