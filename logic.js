@@ -26,31 +26,81 @@ class Controller {
     }
 
     makePDNF() {
-        this.holder.addExpression(document.getElementById('panel').value);
-        if(!this.holder.checkBracket()) {
-            this.calculatorView.clearTable();
-            this.calculatorView.renderTextResult("Неправильно расставленны скобки");
-            return;
-        }
-        if(!this.holder.isFormula()) {
-            this.calculatorView.clearTable();
-            this.calculatorView.renderTextResult("Неправильная формула");
-            return;
-        }
+        let quest = document.getElementById('quest');
+        if (!quest.checked){
+            this.holder.addExpression(document.getElementById('panel').value);
+            if(!this.holder.checkBracket()) {
+                this.calculatorView.clearTable();
+                this.calculatorView.renderTextResult("Неправильно расставленны скобки");
+                return;
+            }
+            if(!this.holder.isFormula()) {
+                this.calculatorView.clearTable();
+                this.calculatorView.renderTextResult("Неправильная формула");
+                return;
+            }
 
-        let arrayWithLiteral = this.holder.getArrayWithLiteral();
-        let countRow = Math.pow(2, arrayWithLiteral.length);
-        let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
+            let arrayWithLiteral = this.holder.getArrayWithLiteral();
+            let countRow = Math.pow(2, arrayWithLiteral.length);
+            let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
+            
+            let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
+            if (result.includes("()") || result == ""){
+                this.calculatorView.clearTable();
+                this.calculatorView.renderTextResult("Невозможно построить СДНФ");
+                return;
+            }
+
+            this.calculatorView.renderTable(table, arrayWithLiteral);
+            this.calculatorView.renderTextResult(result);
+        } else {
+            this.calculatorView.clearTable();
+            this.calculatorView.renderTextResult("");
+            this.holder.addExpression(document.getElementById('panel').value);
+            if(!this.holder.checkBracket()) {
+                this.calculatorView.renderQuest("");
+                return;
+            }
+            if(!this.holder.isFormula()) {
+                this.calculatorView.renderQuest("");
+                return;
+            }
+
+            let arrayWithLiteral = this.holder.getArrayWithLiteral();
+            let countRow = Math.pow(2, arrayWithLiteral.length);
+            let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
+            
+            let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
+            if (result.includes("()") || result == ""){
+                this.calculatorView.renderQuest("");
+                return;
+            }
+            this.calculatorView.renderQuest(result);
+        }
         
-        let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
-        if (result.includes("()") || result == ""){
-            this.calculatorView.clearTable();
-            this.calculatorView.renderTextResult("Невозможно построить СДНФ");
-            return;
-        }
+    }
 
-        this.calculatorView.renderTable(table, arrayWithLiteral);
-        this.calculatorView.renderTextResult(result);
+    checkAnswer(item){
+        this.holder.addExpression(document.getElementById('panel').value);
+            if(!this.holder.checkBracket()) {
+                this.calculatorView.renderRightAnswer(item.value, "");
+                return;
+            }
+            if(!this.holder.isFormula()) {
+                this.calculatorView.renderRightAnswer(item.value, "");
+                return;
+            }
+
+            let arrayWithLiteral = this.holder.getArrayWithLiteral();
+            let countRow = Math.pow(2, arrayWithLiteral.length);
+            let table = this.holder.madeTruthTable(arrayWithLiteral, countRow);
+            
+            let result = this.holder.makePDNF(table, arrayWithLiteral, countRow);
+            if (result.includes("()") || result == ""){
+                this.calculatorView.renderRightAnswer(item.value, "");
+                return;
+            }
+            this.calculatorView.renderRightAnswer(item.value, result);
     }
 
     cleanPanel() {
@@ -157,49 +207,76 @@ class ExpressionHolder {
 
     makePDNF(table, arrayWithLiteral, countRow) {
         let resultColumn = arrayWithLiteral.length;
-        let result = "";
-        let array = [];
-        for(let index = 0; index < countRow; index++) {
-            if(table[index][resultColumn] === "1") {
-                let formula = this.makeSubFormulaForRow(table[index], arrayWithLiteral);
-                array.push(formula);
+        let array = "";
+        let count = ExpressionHolder.getDijunctionCount(table, countRow, resultColumn);
+
+        if (count > 1) {
+            array += "(";
+        }
+
+        let groupCount = 0;
+        for (let index = 0; index < countRow; index++) {
+            if (table[index][resultColumn] === "1") {
+                let formula = ExpressionHolder.makeSubFormulaForRow(table[index], arrayWithLiteral);
+                array += formula;
+                if (groupCount !== count - 1) {
+                    array += "|";
+                }
+                if (groupCount < count - 2) {
+                    array += '(';
+                }
+                groupCount++;
             }
         }
-        result += array.join("|") + "";
-        let size = result.split("|").length;
-        if (size > 1){
-            result = '(' + result + ')';
+
+        for (let index = 0; index < count - 1; index++) {
+            array += ')';
         }
-        return result;
+        return array;
     }
 
-    makeSubFormulaForRow(row, arrayWithLiteral) {
+    static getDijunctionCount(table, countRow, resultColumn){
+        let count = 0;
+
+        for (let index = 0; index < countRow; index++) {
+            if (table[index][resultColumn] === "1") {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    static makeSubFormulaForRow(row, array) {
         let formula = "";
-        if(arrayWithLiteral.length > 1) {
+        if (array.length > 1) {
             formula += "(";
         }
-        for(let index = 0; index < arrayWithLiteral.length; index++) {
-            if(row[index] === "0") {
-                formula += "(!" + arrayWithLiteral[index] + ")";
+
+        for (let index = 0; index < array.length; index++) {
+            if (row[index] === "0") {
+                formula += "(!" + array[index] + ")";
             } else {
-                formula += arrayWithLiteral[index];
+                formula += array[index];
             }
-            if(index != arrayWithLiteral.length - 1) {
+            if (index !== array.length - 1) {
                 formula += "&";
             }
+            if (index < array.length - 2) {
+                formula += '(';
+            }
         }
-        if(arrayWithLiteral.length > 1) {
-            formula += ")";
+        for (let index = 0; index < array.length - 1; index++) {
+            formula += ')';
         }
         return formula;
     }
 
     madeTruthTable(arrayWithLiteral, countRow) {
         let table = [];
-    
-        for(let index = 0; index < countRow; index++){
+
+        for (let index = 0; index < countRow; index++) {
             let row = [];
-            let byte = this.numberToBinaryString(index, arrayWithLiteral.length);
+            let byte = ExpressionHolder.numberToBinaryString(index, arrayWithLiteral.length);
             row.push(...byte);
             row.push(this.getResultForRow(byte, arrayWithLiteral));
             table.push(row);
@@ -209,18 +286,18 @@ class ExpressionHolder {
 
     getArrayWithLiteral() {
         let arrayWithLiteral = [];
-        for(let index = 0; index < this.expression.length; index++) {
+        for (let index = 0; index < this.expression.length; index++) {
             let str = this.expression[index];
-            if(str.match(/[A-Z]/) !== null && !arrayWithLiteral.includes(str)) {
+            if (str.match(/[A-Z]/) !== null && !arrayWithLiteral.includes(str)) {
                 arrayWithLiteral.push(str);
             }
         }
         return arrayWithLiteral;
     }
 
-    numberToBinaryString(number, stringLength){
+    static numberToBinaryString(number, stringLength) {
         let string = (number >>> 0).toString(2);
-        for (let i = string.length; i < stringLength; i++){
+        for (let i = string.length; i < stringLength; i++) {
             string = "0" + string;
         }
         return string;
@@ -228,29 +305,28 @@ class ExpressionHolder {
 
     getResultForRow(byte, arrayWithLiteral) {
         let map = {};
-        let i = 0;
-        for(let index in arrayWithLiteral) {
+        for (let index in arrayWithLiteral) {
             map[arrayWithLiteral[index]] = byte.charAt(index++);
         }
-        let newString = this.replaceLogicSymbol(this.expression);
-        for(let index in Object.keys(map)) {
+        let newString = ExpressionHolder.replaceLogicSymbol(this.expression);
+        for (let index in Object.keys(map)) {
             let key = Object.keys(map)[index];
-            while(newString.match(key) != null) {
+            while (newString.match(key) != null) {
                 newString = newString.replace(key, map[key]);
             }
         }
-        if(eval(newString)) {
+        if (eval(newString)) {
             return "1";
         } else {
             return "0";
         }
     }
 
-    replaceLogicSymbol(string) {
+    static replaceLogicSymbol(string) {
         let newString = [];
-        for(let index = 0; index < string.length; index++) {
+        for (let index = 0; index < string.length; index++) {
             let symbol = string[index];
-            if(symbol === "&") {
+            if (symbol === "&") {
                 newString.push("&&");
             } else if (symbol === "|") {
                 newString.push("||");
@@ -264,11 +340,11 @@ class ExpressionHolder {
                     brackets.push(literal);
                     let buffer = [];
                     buffer.push(literal);
-                    while(brackets.length > 0) {
+                    while (brackets.length > 0) {
                         let substring = newString.pop();
-                        if(substring === "(") {
+                        if (substring === "(") {
                             brackets.pop();
-                        } else if (substring === ")"){
+                        } else if (substring === ")") {
                             brackets.push(substring);
                         }
                         buffer.push(substring);
@@ -292,6 +368,10 @@ class CalculatorView {
         this.edit = document.getElementById('panel');
         this.result = document.getElementById('result');
         this.table = document.getElementById('table');
+        this.questPanel = document.getElementById('questPanel');
+        this.action = document.getElementById('action');
+        this.quest = document.getElementById('quest'); 
+
     }
 
     renderTextEdit(expression) {
@@ -299,7 +379,11 @@ class CalculatorView {
     }
 
     renderTextResult(expression) {
-         this.result.innerText = "СДНФ: " + expression;
+        this.result.innerText = "";
+        if (expression != ""){
+            this.result.innerText += "СДНФ: ";
+        }
+         this.result.innerText += expression;
     }
 
     clearTable() {
@@ -332,6 +416,41 @@ class CalculatorView {
         this.table.innerHTML = innerHTML;
     }
 
+    renderQuest(result){
+        let variants = ["Неправильно расставленны скобки", "Неправильная формула", "Невозможно построить СДНФ"];
+        let innerHTML = "<label>Выберите правильный  вариант</label>";
+        if (result != ""){
+            variants.push(result);
+            let index = this.getRandomInt(result.length-1);
+            let newResult = result.slice(0, index) + result.slice(index+1);
+            variants.push(newResult);
+        }
+        this.shuffle(variants);
+        variants.forEach(element => innerHTML += this.addButton(element));
+        this.questPanel.innerHTML = innerHTML;
+    }
+
+    shuffle(array) {
+        array.sort(() => Math.random() - 0.5);
+      }
+
+    getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+      }
+
+    addButton(value){
+        return "<input class=\"form-group btn btn-default formButtonfront btn-second\" name=\"btnCheck\" type=\"button\" value=\" " + value + " \" onclick=\"controller.checkAnswer(this)\"/>\n";
+    }
+
+    renderRightAnswer(answer, result){
+        if (answer.includes(result)){
+            this.result.innerHTML = "<h5>Правильно!\nВы молодец</h5>";
+        } else {
+            this.result.innerHTML= "<h5>Неправильно! Ваш ответ:\n" + answer + "\nПравильный ответ был:\n" + result + "</h5>";
+        }
+        this.questPanel.innerHTML = "";
+    }
+
     fill(element){
     	let addValue = element.value;
     	if (addValue.includes("Clear")){
@@ -353,4 +472,17 @@ class CalculatorView {
     clean() {
         this.edit.value = "";
     }
+
+    changeAction(checkbox){
+        if (checkbox.checked){
+            this.action.value = "Показать варианты!";
+        } else {
+            this.action.value = "Построить СДНФ";
+        }
+        this.clearTable();
+        this.renderTextResult("");
+        this.questPanel.innerHTML = "";
+
+    }
+
 }

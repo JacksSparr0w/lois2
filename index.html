@@ -8,12 +8,22 @@
 </head>
 <body onload="createController()">
 <div class="d-flex justify-content-center">
+    <div class="calculator-container" id="questPanel">
+    </div>
     <form name="form" class="calculator-container">
         <label>Построить СДНФ для заданной формулы</label>
         <br/>
         <input class="form-control input-panel" id="panel" name="panel" placeholder="0"/>
+        <div class="input-group mt-3">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                <input type="checkbox" aria-label="quest-mode" id="quest" onchange="calcView.changeAction(this)">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="quest-mode" value="Режим тестирования" disabled>
+          </div>
         <div class="btn-container">
-            <input class="form-group btn btn-default btn-success" name="btnCheck" type="button" value="Построить"
+            <input class="form-group btn btn-default btn-success formButtonfront" name="btnCheck" type="button" value="Построить СДНФ" id="action"
                    onclick="controller.makePDNF()"/>
         </div>
         <label id="result"></label>
